@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Healthcare Fraud Detection Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; }
+  .header { background: #1e293b; padding: 20px 40px; border-bottom: 2px solid #3b82f6; display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 22px; color: #38bdf8; }
+  .header p { font-size: 13px; color: #94a3b8; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px 40px; }
+  .stat-card { background: #1e293b; border-radius: 12px; padding: 20px; border-left: 4px solid #3b82f6; }
+  .stat-card.red { border-left-color: #ef4444; }
+  .stat-card.green { border-left-color: #22c55e; }
+  .stat-card.yellow { border-left-color: #f59e0b; }
+  .stat-label { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: bold; color: #f1f5f9; }
+  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 0 40px 24px; }
+  .card { background: #1e293b; border-radius: 12px; padding: 24px; }
+  .card h2 { font-size: 16px; color: #38bdf8; margin-bottom: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; }
+  .btn { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; font-weight: bold; }
+  .btn:hover { background: #2563eb; }
+  .result { margin-top: 16px; padding: 16px; border-radius: 8px; display: none; }
+  .result.fraud { background: #450a0a; border: 1px solid #ef4444; }
+  .result.safe { background: #052e16; border: 1px solid #22c55e; }
+  .result h3 { font-size: 18px; margin-bottom: 8px; }
+  .result.fraud h3 { color: #ef4444; }
+  .result.safe h3 { color: #22c55e; }
+  .result p { font-size: 13px; color: #cbd5e1; margin-bottom: 4px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+  .badge.high { background: #ef4444; color: white; }
+  .badge.medium { background: #f59e0b; color: black; }
+  .badge.low { background: #22c55e; color: black; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px; background: #0f172a; color: #94a3b8; font-weight: 500; }
+  td { padding: 10px; border-top: 1px solid #1e293b; color: #cbd5e1; }
+  tr:hover td { background: #0f172a; }
+  .fraud-badge { background: #ef4444; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+  .safe-badge { background: #22c55e; color: black; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Healthcare Fraud Detection Dashboard</h1>
+    <p>Real-time AI-powered insurance claim analysis</p>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-label">Total Claims Analysed</div>
+    <div class="stat-value" id="total">2,000</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-label">Fraud Detected</div>
+    <div class="stat-value" id="fraudCount">400</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Auto Approved</div>
+    <div class="stat-value" id="approvedCount">1,600</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="stat-label">Fraud Rate</div>
+    <div class="stat-value">20%</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="card">
+    <h2>Submit New Claim for Analysis</h2>
+    <div class="form-group">
+      <label>Patient Age</label>
+      <input type="number" id="age" value="45" min="1" max="100">
+    </div>
+    <div class="form-group">
+      <label>Hospital</label>
+      <select id="hospital">
+        <option>Apollo Hospital</option>
+        <option>Fortis Healthcare</option>
+        <option>AIIMS Delhi</option>
+        <option>Manipal Hospital</option>
+        <option>Narayana Health</option>
+        <option>Max Hospital</option>
+        <option>Medanta</option>
+        <option>Kokilaben Hospital</option>
+        <option>Christian Medical College</option>
+        <option>NIMHANS</option>
+        <option>Lilavati Hospital</option>
+        <option>Aster CMI</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Procedure</label>
+      <select id="procedure" onchange="updateDiagnosis()">
+        <option>Angioplasty</option>
+        <option>Knee Replacement</option>
+        <option>Appendectomy</option>
+        <option>Cataract Surgery</option>
+        <option>Dialysis</option>
+        <option>MRI Scan</option>
+        <option>CT Scan</option>
+        <option>Normal Delivery</option>
+        <option>C-Section</option>
+        <option>Chemotherapy</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Diagnosis</label>
+      <input type="text" id="diagnosis" value="Coronary Artery Disease">
+    </div>
+    <div class="form-group">
+      <label>Claim Amount (₹)</label>
+      <input type="number" id="amount" value="250000">
+    </div>
+    <div class="form-group">
+      <label>Days in Hospital</label>
+      <input type="number" id="days" value="4" min="0">
+    </div>
+    <div class="form-group">
+      <label>Claims This Month</label>
+      <input type="number" id="claims" value="2" min="1">
+    </div>
+    <button class="btn" onclick="submitClaim()">Analyse Claim</button>
+
+    <div class="result" id="result">
+      <h3 id="result-title"></h3>
+      <p id="result-prob"></p>
+      <p id="result-risk"></p>
+      <p id="result-decision"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Recent Claims</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Hospital</th>
+          <th>Procedure</th>
+          <th>Amount (₹)</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="claims-table">
+        <tr><td colspan="4" style="text-align:center;color:#94a3b8">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const diagnosisMap = {
+  "Angioplasty": "Coronary Artery Disease",
+  "Knee Replacement": "Osteoarthritis",
+  "Appendectomy": "Appendicitis",
+  "Cataract Surgery": "Cataract",
+  "Dialysis": "Chronic Kidney Disease",
+  "MRI Scan": "Back Pain",
+  "CT Scan": "Head Injury",
+  "Normal Delivery": "Pregnancy",
+  "C-Section": "Pregnancy Complications",
+  "Chemotherapy": "Cancer"
+};
+
+function updateDiagnosis() {
+  const proc = document.getElementById("procedure").value;
+  document.getElementById("diagnosis").value = diagnosisMap[proc] || "";
+}
+
+async function submitClaim() {
+  const btn = document.querySelector(".btn");
+  btn.textContent = "Analysing...";
+  btn.disabled = true;
+
+  const payload = {
+    patient_age: parseInt(document.getElementById("age").value),
+    hospital: document.getElementById("hospital").value,
+    procedure: document.getElementById("procedure").value,
+    diagnosis: document.getElementById("diagnosis").value,
+    claim_amount: parseFloat(document.getElementById("amount").value),
+    days_in_hospital: parseInt(document.getElementById("days").value),
+    claims_in_month: parseInt(document.getElementById("claims").value)
+  };
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    const resultDiv = document.getElementById("result");
+    resultDiv.style.display = "block";
+    resultDiv.className = "result " + (data.fraud_detected ? "fraud" : "safe");
+    document.getElementById("result-title").textContent = data.fraud_detected ? "FRAUD DETECTED" : "CLAIM APPROVED";
+    document.getElementById("result-prob").textContent = "Fraud Probability: " + data.fraud_probability + "%";
+    document.getElementById("result-risk").innerHTML = 'Risk Level: <span class="badge ' + data.risk_level.toLowerCase() + '">' + data.risk_level + '</span>';
+    document.getElementById("result-decision").textContent = "Decision: " + data.decision;
+  } catch(e) {
+    alert("Error: Make sure the API is running at http://127.0.0.1:8000");
+  }
+
+  btn.textContent = "Analyse Claim";
+  btn.disabled = false;
+}
+
+async function loadRecentClaims() {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/claims/recent");
+    const data = await res.json();
+    const tbody = document.getElementById("claims-table");
+    tbody.innerHTML = data.claims.map(c => `
+      <tr>
+        <td>${c.hospital}</td>
+        <td>${c.procedure}</td>
+        <td>₹${c.claim_amount.toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+        <td>${c.is_fraud ? '<span class="fraud-badge">FRAUD</span>' : '<span class="safe-badge">GENUINE</span>'}</td>
+      </tr>
+    `).join("");
+  } catch(e) {
+    document.getElementById("claims-table").innerHTML = '<tr><td colspan="4" style="color:#ef4444">API not reachable</td></tr>';
+  }
+}
+
+loadRecentClaims();
+</script>
+</body>
+</html>
